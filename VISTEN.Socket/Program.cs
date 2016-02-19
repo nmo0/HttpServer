@@ -18,18 +18,21 @@ namespace VISTEN.HTTPServer
             IPEndPoint ipEnd = new IPEndPoint(ip, port);
             //服务器流程
             // 1.创建新的套接字 socket
+            Console.WriteLine("创建新的套接字...");
             Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
             // 2.将套接字绑定到80端口 bind
             socket.Bind(ipEnd);
 
             // 3.允许套接字进行连接 listen
+            Console.WriteLine("开始监听...");
             socket.Listen(0);
-            try
+            // 4.等待连接 accept
+            while (true)
             {
-                // 4.等待连接 accept
-                while (true)
+                try
                 {
+                    #region 操作
                     // 5.(3)通知应用程序有连接到来(4)
                     Socket socketTemp = socket.Accept();
 
@@ -40,29 +43,30 @@ namespace VISTEN.HTTPServer
                     bytes = socketTemp.Receive(recvBytes, recvBytes.Length, 0);//从客户端接受信息
                     recvStr += Encoding.ASCII.GetString(recvBytes, 0, bytes);
 
+                    if (string.IsNullOrEmpty(recvStr))
+                        continue;
+
                     // 7.处理HTTP请求报文(6)
 
                     #region 解析HTTP报文
 
-                    string startLine = string.Empty;
-                    string method = string.Empty;
-                    string url = string.Empty;
-                    string version = string.Empty;
+                    Console.WriteLine("解析HTTP报文...");
 
-                    Dictionary<string,string> headers = new Dictionary<string,string>();
-                    string body = string.Empty;
+                    HttpRequestMessage request = new HttpRequestMessage();
+                    request.Headers = new Dictionary<string, string>();
 
                     string[] requestMessages = recvStr.Split(new string[] { "\r\n" }, StringSplitOptions.None);
                     if (requestMessages.Length <= 0)
                         requestMessages = recvStr.Split(new string[] { "\r" }, StringSplitOptions.None);
-                    if (requestMessages.Length>0)
+                    if (requestMessages.Length > 0)
                     {
                         //解析起始行
-                        startLine = requestMessages[0];
-                        var startLineStrs = startLine.Split(' ');
-                        method = startLineStrs[0];
-                        url = startLineStrs[1];
-                        version = startLineStrs[2];
+                        request.StartLine = requestMessages[0];
+                        var startLineStrs = request.StartLine.Split(' ');
+                        request.Method = startLineStrs[0];
+                        request.Url = startLineStrs[1];
+                        request.Version = startLineStrs[2];
+
 
                         for (int i = 1; i < requestMessages.Length; i++)
                         {
@@ -70,47 +74,74 @@ namespace VISTEN.HTTPServer
                             if (string.IsNullOrEmpty(str))
                             {
                                 //Header 结束
-                                body = requestMessages[i + 1];
+                                request.Body = requestMessages[i + 1];
                                 break;
                             }
                             //读取Header
-                            var kvTemp = str.Split(':');
-                            headers.Add(kvTemp[0], kvTemp[1]);
+                            var kTemp = str.Remove(str.IndexOf(':'));
+                            var vTemp = str.Substring(str.IndexOf(':') + 1);
+                            request.Headers.Add(kTemp, vTemp.Trim());
                         }
                     }
 
 
-                    Console.WriteLine(string.Format("request address is{0}",startLine));
+                    //Console.WriteLine(string.Format("request address is{0}", request.StartLine));
 
                     #endregion
+                    
+                    Console.WriteLine("回送HTTP响应...");
+                    string sendStr = string.Empty;
 
+                    if (request.Method == "OPTIONS")
+                    {
+                        HttpResponseMessage response = new HttpResponseMessage();
+                        response.Headers = new Dictionary<string, string>();
+                        response.StartLine = "HTTP/1.1 200 OK";
+                        response.Headers.Add("Allow", "GET, POST, TRACE, OPTIONS");
+                        response.Headers.Add("Content-Length", "0");
+                        sendStr = response.ToString();
+                    }
+                    else if (request.Method == "TRACE")
+                    {
+                        HttpResponseMessage response = new HttpResponseMessage();
+                        response.Headers = new Dictionary<string, string>();
+                        response.StartLine = "HTTP/1.1 200 OK";
+                        response.Headers.Add(HttpResponseHeader.Date.ToString(), DateTime.Now.ToString("r"));
+                        response.Headers.Add("Content-Type", "text/html;charset=utf-8");
+                        response.Headers.Add("Content-Length", request.ToString().Length.ToString());
+                        response.Body = request.ToString();
+                        sendStr = response.ToString();
+                    }
+                    else
+                    {
+                        string resultStr = "I am accept your message!";
 
-                    Console.Clear();
-                    Console.WriteLine(recvStr);
+                        HttpResponseMessage response = new HttpResponseMessage();
+                        response.Headers = new Dictionary<string, string>();
+                        response.StartLine = "HTTP/1.1 200 OK";
+                        response.Headers.Add(HttpResponseHeader.Date.ToString(), DateTime.Now.ToString("r"));
+                        response.Headers.Add("Content-Type", "text/html;charset=utf-8");
+                        response.Headers.Add("Content-Length", resultStr.Length.ToString());
+                        response.Body = resultStr;
+                        sendStr = response.ToString();
+                    }
 
                     // 8.回送HTTP响应 write(7)
 
-                    string resultStr = "I am accept your message!";
 
-                    string sendStr = @"
-HTTP/1.1 200 OK
-Date: " + DateTime.Now.ToUniversalTime() + @"
-Content-Type: text/html;charset=utf-8
-Content-Length: " + resultStr.Length + @"
-
-" + resultStr;
                     byte[] bs = Encoding.ASCII.GetBytes(sendStr);
                     socketTemp.Send(bs, bs.Length, 0);//返回信息给客户端
                     socketTemp.Close();
+                    #endregion
                 }
-                // 9.关闭close
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                }
 
             }
-            catch (Exception)
-            {
-                socket.Close();
-                throw;
-            }
+            // 9.关闭close
+            socket.Close();
         }
     }
 }
