@@ -5,6 +5,7 @@ using System.Text;
 
 namespace VISTEN.HTTPServer
 {
+    [Serializable]
     public class HttpMessage
     {
         public string StartLine { get; set; }

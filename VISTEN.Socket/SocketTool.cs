@@ -8,7 +8,7 @@ using System.Net.Sockets;
 namespace VISTEN.HTTPServer {
     public class SocketTool {
 
-        public delegate string SocketHandle(string data);
+        public delegate void SocketHandle(Socket socket);
         public string Host { get; set; }
         public int Port { get; set; }
 
@@ -42,22 +42,10 @@ namespace VISTEN.HTTPServer {
             // 4.等待连接 accept
             while (true) {
                 try {
-                    #region 操作
                     // 5.(3)通知应用程序有连接到来(4)
                     Socket socketTemp = socket.Accept();
-
-                    // 6.开始读取请求read(5)
-                    string recvStr = "";
-                    byte[] recvBytes = new byte[1024];
-                    int bytes;
-                    bytes = socketTemp.Receive(recvBytes, recvBytes.Length, 0);//从客户端接受信息
-                    recvStr += Encoding.ASCII.GetString(recvBytes, 0, bytes);
-
-                    string sendStr = RequestSocket(recvStr);
-                    byte[] bs = Encoding.ASCII.GetBytes(sendStr);
-                    socketTemp.Send(bs, bs.Length, 0);//返回信息给客户端
-                    socketTemp.Close();
-                    #endregion
+                    //转发请求
+                    RequestSocket(socketTemp);
                 } catch (Exception e) {
                     Console.WriteLine(e.Message);
                 }
