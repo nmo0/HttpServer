@@ -21,21 +21,43 @@ namespace VISTEN.HTTPServer
 
             //服务器路径 /port:端口号 /path:网站物理路径 /vpath:网站虚拟路径
             //WebDev.WebServer.EXE /port:80 /path:"c:\mysite" /vpath:"/"
-            string dir = @"C:\Users\user\Documents\visual studio 2010\Projects\WebDemo\WebDemo";
-            InitHostFile(dir);
 
-            CoHost host = (CoHost)ApplicationHost.CreateApplicationHost(typeof(CoHost), "/", dir);
+            var keys = System.Configuration.ConfigurationManager.AppSettings.Keys;
+            foreach (var item in keys) {
 
+                Console.WriteLine("正在启动网站：0.0.0.0:{0}",item);
+                string dir = System.Configuration.ConfigurationManager.AppSettings[item.ToString()];
 
-            new SocketTool("127.0.0.1", 8091, delegate(Socket socket){
+                InitHostFile(dir);
 
-                // 7.处理HTTP请求报文(6)
+                CoHost host = (CoHost)ApplicationHost.CreateApplicationHost(typeof(CoHost), "/", dir);
 
-                //请求转发给ASP.NET 运行时处理
-                HttpProcessor processor = new HttpProcessor(host, socket);
-                processor.ProcessRequest();
+                new SocketTool("127.0.0.1", Convert.ToInt32(item.ToString()), delegate(Socket socket) {
 
-            }).Start();
+                    // 7.处理HTTP请求报文(6)
+
+                    //请求转发给ASP.NET 运行时处理
+                    HttpProcessor processor = new HttpProcessor(host, socket);
+                    processor.ProcessRequest();
+
+                }).Start();
+            }
+
+            //string dir = @"C:\Users\user\Documents\visual studio 2010\Projects\WebDemo\WebDemo";
+            //InitHostFile(dir);
+            //
+            //CoHost host = (CoHost)ApplicationHost.CreateApplicationHost(typeof(CoHost), "/", dir);
+            //
+            //
+            //new SocketTool("127.0.0.1", 8091, delegate(Socket socket){
+            //
+            //    // 7.处理HTTP请求报文(6)
+            //
+            //    //请求转发给ASP.NET 运行时处理
+            //    HttpProcessor processor = new HttpProcessor(host, socket);
+            //    processor.ProcessRequest();
+            //
+            //}).Start();
         }
 
 

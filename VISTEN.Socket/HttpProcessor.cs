@@ -41,7 +41,7 @@ namespace VISTEN.HTTPServer {
                 data += Encoding.ASCII.GetString(recvBytes, 0, bytes);
 
 
-                Console.WriteLine("解析HTTP报文...");
+                //Console.WriteLine("解析HTTP报文...");
 
                 HttpRequestMessage request = new HttpRequestMessage();
                 request.Headers = new Dictionary<string, string>();

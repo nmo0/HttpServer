@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Web;
 using System.Web.Hosting;
+using System.IO;
 
 namespace VISTEN.HTTPServer {
     /// <summary>
@@ -145,6 +146,10 @@ namespace VISTEN.HTTPServer {
         /// <param name="length"></param>
         public override void SendResponseFromFile(string filename, long offset, long length) {
             //throw new NotImplementedException();
+            if (length > 0) {
+                //byte[] dst = new byte[length];
+                _responseBodyBytes.Add(GetFileByteArray(filename));
+            }
         }
 
         /// <summary>
@@ -179,7 +184,7 @@ namespace VISTEN.HTTPServer {
             _responseBodyBytes = new List<byte[]>();
             if (finalFlush)
                 processor.Close();
-            Console.WriteLine("成功发送响应...");
+            //Console.WriteLine("成功发送响应...");
         }
 
         /// <summary>
@@ -200,5 +205,31 @@ namespace VISTEN.HTTPServer {
         public override void SendUnknownResponseHeader(string name, string value) {
             _responseHeaders[name] = value;
         }
+
+        /// <summary>
+        /// Files the content.
+        /// </summary>
+        /// <param name="fileName">Name of the file.</param>
+        /// <returns></returns>
+        private byte[] GetFileByteArray(string fileName) {
+            FileStream fs = new FileStream(fileName, FileMode.Open, FileAccess.Read);
+            try {
+                byte[] buffur = new byte[fs.Length];
+                fs.Read(buffur, 0, (int)fs.Length);
+
+                return buffur;
+            } catch (Exception ex) {
+                Console.WriteLine(ex.Message);
+                return null;
+            } finally {
+                if (fs != null) {
+
+                    //关闭资源
+                    fs.Close();
+                }
+            }
+        }
+
+
     }
 }
