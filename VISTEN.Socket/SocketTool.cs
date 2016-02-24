@@ -53,6 +53,7 @@ namespace VISTEN.HTTPServer {
                 try {
                     // 5.(3)通知应用程序有连接到来(4)
                     Socket socketTemp = socket.Accept();
+                    Console.WriteLine(string.Format("端口{0}收到请求,加入线程队列。。",Port));
                     //接收到请求后，将请求放到线程队列中
                     ThreadPool.QueueUserWorkItem(AcceptSocket,socketTemp);
                     //转发请求
@@ -67,6 +68,7 @@ namespace VISTEN.HTTPServer {
 
         private void AcceptSocket(object temp) {
             Socket socketTemp = temp as Socket;
+            Console.WriteLine(string.Format("端口{0}开始处理。。", Port));
             RequestSocket(socketTemp);
         }
     }

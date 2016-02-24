@@ -26,6 +26,7 @@ namespace VISTEN.HTTPServer
             foreach (var item in keys) {
 
                 Console.WriteLine("正在启动网站：0.0.0.0:{0}",item);
+                STSdb4Log.Info(string.Format("正在启动网站：0.0.0.0:{0}", item));
                 string dir = System.Configuration.ConfigurationManager.AppSettings[item.ToString()];
 
                 InitHostFile(dir);

@@ -20,6 +20,8 @@ namespace VISTEN.HTTPServer {
         }
 
         public void ProcessRequest(HttpProcessor processor, HttpRequestMessage requestInfo) {
+            //STSdb4Log.Info(string.Format("请求转发到网站"));
+            Console.WriteLine("请求转发到网站管道。。");
             CoHttpWorkerRequest workerRequest = new CoHttpWorkerRequest(this, processor, requestInfo);
             HttpRuntime.ProcessRequest(workerRequest);
         }

@@ -65,7 +65,7 @@ namespace VISTEN.HTTPServer {
         /// </summary>
         /// <returns></returns>
         public override string GetLocalAddress() {
-            return string.Empty;
+            return "0.0.0.0";
         }
 
         /// <summary>
@@ -81,7 +81,7 @@ namespace VISTEN.HTTPServer {
         /// </summary>
         /// <returns></returns>
         public override string GetQueryString() {
-            return string.Empty;
+            return requestInfo.GetQueryString();
         }
 
         /// <summary>
@@ -97,8 +97,8 @@ namespace VISTEN.HTTPServer {
         /// </summary>
         /// <returns></returns>
         public override string GetRemoteAddress() {
-            var host = requestInfo.Headers.Where(m => m.Key == "Host").FirstOrDefault();
-            return host.Value;
+            var host = requestInfo.Headers["Host"];
+            return host;
         }
 
         /// <summary>
@@ -106,7 +106,7 @@ namespace VISTEN.HTTPServer {
         /// </summary>
         /// <returns></returns>
         public override int GetRemotePort() {
-            var host = requestInfo.Headers.Where(m => m.Key == "Host").FirstOrDefault().ToString();
+            var host = requestInfo.Headers["Host"];
             return 0;
         }
 
@@ -116,7 +116,8 @@ namespace VISTEN.HTTPServer {
         /// <returns></returns>
         public override string GetUriPath() {
             //var host = requestInfo.Headers.Where(m => m.Key == "Host").FirstOrDefault();
-            return requestInfo.Url;
+            int index = requestInfo.Url.IndexOf('?');
+            return index > -1 ? requestInfo.Url.Remove(index) : requestInfo.Url;
         }
 
         /// <summary>
@@ -125,7 +126,8 @@ namespace VISTEN.HTTPServer {
         /// <param name="index"></param>
         /// <param name="value"></param>
         public override void SendKnownResponseHeader(int index, string value) {
-            //throw new NotImplementedException();
+            //_responseHeaders
+            _responseHeaders[HttpWorkerRequest.GetKnownResponseHeaderName(index)] = value;
         }
 
         /// <summary>
@@ -173,6 +175,7 @@ namespace VISTEN.HTTPServer {
         /// <param name="finalFlush"></param>
         public override void FlushResponse(bool finalFlush) {
             //发送响应
+            Console.WriteLine("发送响应。。");
             if (!_isHeaderSent) {
                 processor.SendHeaders( _statusCode, _responseHeaders, -1, finalFlush);
                 _isHeaderSent = true;
@@ -204,6 +207,26 @@ namespace VISTEN.HTTPServer {
         /// <param name="value"></param>
         public override void SendUnknownResponseHeader(string name, string value) {
             _responseHeaders[name] = value;
+        }
+
+        /// <summary>
+        /// 返回 HTTP 请求正文已被读取的部分。
+        /// </summary>
+        /// <returns></returns>
+        public override byte[] GetPreloadedEntityBody() {
+            return System.Text.Encoding.Default.GetBytes(requestInfo.Body);
+        }
+
+        /// <summary>
+        /// 返回与指定的索引相对应的标准 HTTP 请求标头。
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns></returns>
+        public override string GetKnownRequestHeader(int index) {
+            var headerName = HttpWorkerRequest.GetKnownRequestHeaderName(index);
+            return requestInfo.Headers.Keys.Contains(headerName) ? 
+                requestInfo.Headers[headerName] : 
+                string.Empty;
         }
 
         /// <summary>

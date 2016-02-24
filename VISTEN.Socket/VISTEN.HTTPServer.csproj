@@ -54,12 +54,20 @@
     <Compile Include="HttpProcessor.cs" />
     <Compile Include="HttpRequestMessage.cs" />
     <Compile Include="HttpResponseMessage.cs" />
+    <Compile Include="Log.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SocketTool.cs" />
+    <Compile Include="STSdb4Log.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\STSdb4\STSdb4.csproj">
+      <Project>{1EEF0D30-AB17-40B5-8468-AD33FC672ED9}</Project>
+      <Name>STSdb4</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

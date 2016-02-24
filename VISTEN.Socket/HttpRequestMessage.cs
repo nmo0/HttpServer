@@ -11,6 +11,12 @@ namespace VISTEN.HTTPServer {
         public string Method { get; set; }
         public string Version { get; set; }
 
+        public string GetQueryString() {
+            return Url.IndexOf('?') > -1 ? 
+                Url.Substring(Url.IndexOf('?') + 1) : 
+                string.Empty;
+        }
+
         public override string ToString() {
             StringBuilder tempStr = new StringBuilder();
 

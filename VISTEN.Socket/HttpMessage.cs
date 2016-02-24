@@ -28,5 +28,19 @@ namespace VISTEN.HTTPServer
             tempStr.Append(Body);
             return tempStr.ToString();
         }
+
+        /// <summary>
+        /// 获取或设置Headers头属性
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public string this[string name] {
+            get {
+                return Headers[name];
+            }
+            set {
+                Headers[name] = value;
+            }
+        }
     }
 }

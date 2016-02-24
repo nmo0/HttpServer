@@ -25,21 +25,25 @@ namespace VISTEN.HTTPServer {
         public void ProcessRequest() {
             try {
 
-
                 #region 解析HTTP报文
                 
                 string data = "";
-                byte[] recvBytes = new byte[1024];
-                int bytes;
-                bytes = _socket.Receive(recvBytes, recvBytes.Length, 0);//从客户端接受信息
+                byte[] recvBytes;
+                int bytes = 0;
+                //bytes = _socket.Receive(recvBytes, recvBytes.Length, 0);//从客户端接受信息
+                //_socket.Receive(recvBytes, 1024, 0);
+
+                //从缓冲区循环读取数据
+                do {
+                    recvBytes = new byte[1024];
+                    bytes = _socket.Receive(recvBytes, recvBytes.Length, 0);
+                    data += Encoding.ASCII.GetString(recvBytes, 0, bytes);
+                } while (bytes >= 1024);
 
                 if (bytes <= 0) {
                     SendResponse(400, new byte[0], null);
                     return;
                 }
-
-                data += Encoding.ASCII.GetString(recvBytes, 0, bytes);
-
 
                 //Console.WriteLine("解析HTTP报文...");
 
@@ -102,11 +106,9 @@ namespace VISTEN.HTTPServer {
 
                 #endregion
 
+            } catch (Exception e) {
 
-
-            } catch (Exception) {
-                
-                throw;
+                STSdb4Log.Info(string.Format(e.Message));
             }
         }
 
@@ -124,23 +126,12 @@ namespace VISTEN.HTTPServer {
         }
 
         public void SendHeaders(int statusCode, Dictionary<string, string> headers,int contentLength, bool keepAlive = true) {
+            var responseStr = new HttpResponseMessage() {
+                Headers = headers,
+                StatusCode = statusCode
+            }.HeadersToString(contentLength, keepAlive);
 
-            StringBuilder builder = new StringBuilder();
-            builder.AppendFormat("HTTP/1.1 {0} OK\r\n", statusCode);
-            builder.AppendFormat("Date: {0}\r\n",
-                                 DateTime.Now.ToUniversalTime().ToString("R"));
-            if (contentLength > 0)
-                builder.AppendFormat("Content-Length: {0}\r\n", contentLength);
-            if (keepAlive)
-                builder.Append("Connection: keep-alive\r\n");
-            if (headers != null) {
-                foreach (KeyValuePair<string, string> pair in headers) {
-                    builder.AppendFormat("{0}: {1}\r\n", pair.Key, pair.Value);
-                }
-            }
-            builder.Append("\r\n");
-
-            _socket.Send(Encoding.UTF8.GetBytes(builder.ToString()));
+            _socket.Send(Encoding.UTF8.GetBytes(responseStr));
         }
 
         public void SendResponse(byte[] data) {

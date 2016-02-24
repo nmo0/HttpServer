@@ -11,26 +11,30 @@ namespace VISTEN.HTTPServer {
         /// <summary>
         /// 状态码
         /// </summary>
-        public string StatusCode { get; set; }
+        public int StatusCode { get; set; }
         /// <summary>
         /// 原因短语
         /// </summary>
         public string ReasonPhrase { get; set; }
 
-        public override string ToString() {
+        public string HeadersToString(int contentLength = -1, bool keepAlive = false) {
             StringBuilder tempStr = new StringBuilder();
 
-            base.StartLine = Version + " " + StatusCode + " " + ReasonPhrase;
+            tempStr.AppendFormat("HTTP/1.1 {0} {1}\r\n", StatusCode, "OK");
+            tempStr.AppendFormat("Date: {0}\r\n", DateTime.Now.ToUniversalTime().ToString("R"));
+            if (contentLength > 0)
+                tempStr.AppendFormat("Content-Length: {0}\r\n", contentLength);
+            if (keepAlive)
+                tempStr.Append("Connection: keep-alive\r\n");
+            foreach (var item in Headers)
+                tempStr.AppendFormat("{0}: {1}\r\n", item.Key, item.Value);
+            tempStr.Append("\r\n");
+            return tempStr.ToString();
+        }
 
-            tempStr.Append(StartLine);
-            tempStr.Append("\r\n");
-            foreach (var item in Headers) {
-                tempStr.Append(item.Key);
-                tempStr.Append(": ");
-                tempStr.Append(item.Value);
-                tempStr.Append("\r\n");
-            }
-            tempStr.Append("\r\n");
+        public string ToString(int contentLength = -1, bool keepAlive = false) {
+            StringBuilder tempStr = new StringBuilder();
+            tempStr.Append(HeadersToString(contentLength, keepAlive));
             tempStr.Append(Body);
             return tempStr.ToString();
         }
