@@ -25,5 +25,14 @@ namespace VISTEN.HTTPServer {
             CoHttpWorkerRequest workerRequest = new CoHttpWorkerRequest(this, processor, requestInfo);
             HttpRuntime.ProcessRequest(workerRequest);
         }
+
+        /// <summary>
+        ///  对象“/***/***.rem”已经断开连接或不在服务器上。
+        /// </summary>
+        /// <returns></returns>
+        public override object InitializeLifetimeService() {
+            //Remoting对象 无限生存期
+            return null;
+        }
     }
 }

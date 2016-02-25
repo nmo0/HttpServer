@@ -172,7 +172,7 @@ namespace VISTEN.HTTPServer {
         /// <summary>
         /// 将所有挂起的响应数据发送到客户端。
         /// </summary>
-        /// <param name="finalFlush"></param>
+        /// <param name="finalFlush">如果这将是最后一次刷新响应数据，则为 true；否则为 false。</param>
         public override void FlushResponse(bool finalFlush) {
             //发送响应
             Console.WriteLine("发送响应。。");

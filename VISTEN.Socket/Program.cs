@@ -26,7 +26,7 @@ namespace VISTEN.HTTPServer
             foreach (var item in keys) {
 
                 Console.WriteLine("正在启动网站：0.0.0.0:{0}",item);
-                STSdb4Log.Info(string.Format("正在启动网站：0.0.0.0:{0}", item));
+                //STSdb4Log.Info(string.Format("正在启动网站：0.0.0.0:{0}", item));
                 string dir = System.Configuration.ConfigurationManager.AppSettings[item.ToString()];
 
                 InitHostFile(dir);
@@ -36,8 +36,9 @@ namespace VISTEN.HTTPServer
                 new SocketTool("127.0.0.1", Convert.ToInt32(item.ToString()), delegate(Socket socket) {
 
                     // 7.处理HTTP请求报文(6)
-
                     //请求转发给ASP.NET 运行时处理
+
+                    //当时间t之后，这里调用失败了
                     HttpProcessor processor = new HttpProcessor(host, socket);
                     processor.ProcessRequest();
 

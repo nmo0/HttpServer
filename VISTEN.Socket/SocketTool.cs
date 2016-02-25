@@ -58,7 +58,8 @@ namespace VISTEN.HTTPServer {
                     ThreadPool.QueueUserWorkItem(AcceptSocket,socketTemp);
                     //转发请求
                 } catch (Exception e) {
-                    Console.WriteLine(e.Message);
+                    STSdb4Log.Info(e.Message);
+                    //Console.WriteLine(e.Message);
                 }
 
             }

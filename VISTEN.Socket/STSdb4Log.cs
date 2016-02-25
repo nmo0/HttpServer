@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using STSdb4.Database;
+using System.Threading;
 
 
 namespace VISTEN.HTTPServer {
@@ -13,25 +14,29 @@ namespace VISTEN.HTTPServer {
         /// 记录日志
         /// </summary>
         /// <param name="message"></param>
-        public static void Info(string message,string host = "0.0.0.0",int port = 0,string url = "") {
+        public static void Info(Log log) {
+            ThreadPool.QueueUserWorkItem(SendMessage,log);
+        }
 
-            //var path = Directory.GetCurrentDirectory() + "\\Log\\";
-            //
-            //if (!Directory.Exists(path)) {
-            //    Directory.CreateDirectory(path);
-            //}
-            //
-            //using (IStorageEngine engine = STSdb.FromFile(path + DateTime.Now.ToString("yyyyMMdd") + ".stsdb4")) {
-            //    var table = engine.OpenXTable<string, Log>("table");
-            //    table.InsertOrIgnore(System.Guid.NewGuid().ToString(), new Log() {
-            //        Message = message,
-            //        DateTime = DateTime.Now,
-            //        Url = url,
-            //        Port = port,
-            //        Host = host
-            //    });
-            //    engine.Commit();
-            //}
+        private static  void SendMessage(object log) {
+            using (IStorageEngine engine = STSdb.FromNetwork("localhost", 7182)){
+                var table = engine.OpenXTable<string, Log>("table");
+                table.InsertOrIgnore(System.Guid.NewGuid().ToString(), log as Log);
+                engine.Commit();
+            }
+        }
+
+        /// <summary>
+        /// 有问题。暂时屏蔽
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="url"></param>
+        internal static void Info(string message,string url = "") {
+            //Info(new Log() {
+            //    Message = message,
+            //    Url = url,
+            //    DateTime = DateTime.Now
+            //});
         }
     }
 }

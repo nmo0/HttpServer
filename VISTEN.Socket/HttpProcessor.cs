@@ -30,6 +30,7 @@ namespace VISTEN.HTTPServer {
                 string data = "";
                 byte[] recvBytes;
                 int bytes = 0;
+                int bytesLength = 0;
                 //bytes = _socket.Receive(recvBytes, recvBytes.Length, 0);//从客户端接受信息
                 //_socket.Receive(recvBytes, 1024, 0);
 
@@ -37,15 +38,19 @@ namespace VISTEN.HTTPServer {
                 do {
                     recvBytes = new byte[1024];
                     bytes = _socket.Receive(recvBytes, recvBytes.Length, 0);
+
+                    bytesLength += bytes;
+
                     data += Encoding.ASCII.GetString(recvBytes, 0, bytes);
                 } while (bytes >= 1024);
 
-                if (bytes <= 0) {
-                    SendResponse(400, new byte[0], null);
+                if (bytesLength <= 0) {
+                    Console.WriteLine("发送响应。。");
+                    SendResponse(400, new byte[0], new Dictionary<string,string>(),false);
                     return;
                 }
 
-                //Console.WriteLine("解析HTTP报文...");
+                Console.WriteLine("解析HTTP报文...");
 
                 HttpRequestMessage request = new HttpRequestMessage();
                 request.Headers = new Dictionary<string, string>();
@@ -79,21 +84,26 @@ namespace VISTEN.HTTPServer {
 
                 #region 处理请求类型
 
+
+                STSdb4Log.Info(request.Url);
+
                 if (request.Method == "OPTIONS") {
 
                     HttpResponseMessage response = new HttpResponseMessage();
                     response.Headers = new Dictionary<string, string>();
-                    response.StartLine = "HTTP/1.1 200 OK";
+                    //response.StartLine = "HTTP/1.1 200 OK";
                     response.Headers.Add("Allow", "GET, POST, TRACE, OPTIONS");
-                    SendResponse(200, new byte[0], response.Headers);
+                    Console.WriteLine("发送响应。。");
+                    SendResponse(200, new byte[0], response.Headers,false);
 
                 } else if (request.Method == "TRACE") {
 
                     HttpResponseMessage response = new HttpResponseMessage();
                     response.Headers = new Dictionary<string, string>();
-                    response.StartLine = "HTTP/1.1 200 OK";
+                    //response.StartLine = "HTTP/1.1 200 OK";
                     response.Headers.Add("Content-Type", "text/html;charset=utf-8");
-                    SendResponse(200, Encoding.UTF8.GetBytes(request.ToString()), response.Headers);
+                    Console.WriteLine("发送响应。。");
+                    SendResponse(200, Encoding.UTF8.GetBytes(request.ToString()), response.Headers,false);
 
                 } else {
                     //这里要判断是否静态文件
@@ -107,8 +117,8 @@ namespace VISTEN.HTTPServer {
                 #endregion
 
             } catch (Exception e) {
-
-                STSdb4Log.Info(string.Format(e.Message));
+                STSdb4Log.Info(e.Message);
+                //Console.WriteLine("解析报文失败 Error:{0}",e.Message);
             }
         }
 
@@ -117,15 +127,21 @@ namespace VISTEN.HTTPServer {
             _socket.Close();
         }
 
-        public void SendResponse(int statusCode, byte[] responseBodyBytes, Dictionary<string, string> headers = null, bool keepAlive = false) {
+        public void SendResponse(byte[] data) {
+            _socket.Send(data);
+        }
+
+        public void SendResponse(int statusCode, byte[] responseBodyBytes, Dictionary<string, string> headers, bool keepAlive) {
+            //发送Header时需保持连接知道Body发送完毕
             SendHeaders(statusCode, headers, responseBodyBytes.Length, keepAlive);
-            _socket.Send(responseBodyBytes);
+            if(responseBodyBytes.Length>0)
+                _socket.Send(responseBodyBytes);
 
             if (!keepAlive)
                 Close();
         }
 
-        public void SendHeaders(int statusCode, Dictionary<string, string> headers,int contentLength, bool keepAlive = true) {
+        public void SendHeaders(int statusCode, Dictionary<string, string> headers,int contentLength, bool keepAlive) {
             var responseStr = new HttpResponseMessage() {
                 Headers = headers,
                 StatusCode = statusCode
@@ -134,8 +150,14 @@ namespace VISTEN.HTTPServer {
             _socket.Send(Encoding.UTF8.GetBytes(responseStr));
         }
 
-        public void SendResponse(byte[] data) {
-            _socket.Send(data);
+
+        /// <summary>
+        ///  对象“/***/***.rem”已经断开连接或不在服务器上。
+        /// </summary>
+        /// <returns></returns>
+        public override object InitializeLifetimeService() {
+            //Remoting对象 无限生存期
+            return null;
         }
     }
 }
